@@ -32,7 +32,7 @@ app.use(express.urlencoded({extended: true}));
 
 // Middleware
 app.use(cors({
-    origin: ['https://kaushik-six.vercel.app'],
+    origin: ['http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
