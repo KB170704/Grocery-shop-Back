@@ -113,5 +113,5 @@ app.post('/user/login', async (req, res) => {
 app.get("/Back-End-Says", (req, res) => res.send("Backend running"));
 
 // Start server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
