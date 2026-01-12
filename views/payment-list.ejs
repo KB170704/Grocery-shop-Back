@@ -4,8 +4,7 @@
     <title>Orders</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
+      rel="stylesheet" />
     <style>
       .top-bar {
         display: flex;
@@ -56,8 +55,7 @@
           <td class="p-3">₹<%= order.totalAmount.toFixed(2) %></td>
           <td class="p-3">
             <span
-              class="px-2 py-1 rounded-full text-xs <%= order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>"
-            >
+              class="px-2 py-1 rounded-full text-xs <%= order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
               <%= order.status %>
             </span>
           </td>
@@ -66,15 +64,19 @@
               <input
                 type="hidden"
                 name="status"
-                value="<%= order.status === 'Delivered' ? 'Delivered' : 'Delivered' %>"
-              />
-              <button
-                type="submit"
-                class="bg-orange-500 hover:bg-orange-600 text-black text-sm px-3 py-1 rounded"
-              >
-                Mark as <%= order.status === 'Delivered' ? 'Delivered' : 'Delivered'
-                %>
-              </button>
+                value="<%= order.status === 'Delivered' ? 'Delivered' : 'Delivered' %>" />
+              <form action="/orders/<%= order._id %>/status" method="POST">
+                <button
+                  type="submit"
+                  class="bg-orange-500 hover:bg-orange-600 text-black text-sm px-3 py-1 rounded"
+                  <% if(order.status === 'Delivered'){ %> disabled
+                  class="bg-gray-400 cursor-not-allowed" <% } %>
+                  >
+                  <%= order.status === 'Pending' ? 'Mark as Delivered' :
+                  'Delivered' %>
+                </button>
+              </form>
+
             </form>
           </td>
         </tr>

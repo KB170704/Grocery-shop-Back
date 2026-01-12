@@ -1,12 +1,17 @@
+// configs/db.js
 const mongoose = require('mongoose');
 
 const dbConnection = async () => {
   try {
-    const conn = await mongoose.connect(process.env.DATABASE_CONNECT);
-    console.log(`🚀 MongoDB Connected`);
+    const conn = await mongoose.connect(process.env.DATABASE_CONNECT, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Connected: ${process.env.PORT}`);
   } catch (err) {
-    console.error('❌ MongoDB Connection Failed:', err.message);
-    process.exit(1); // Exit on failure
+    console.error(`Error: ${err.message} ❌`);
+    process.exit(1); // Stop server if DB fails
   }
 };
 
