@@ -33,11 +33,26 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 
 // Middleware
+const allowedOrigins = [
+  'https://kaushik-six.vercel.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-    origin: ['https://kaushik-six.vercel.app', 'http://localhost:3000'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+  origin: function (origin, callback) {
+    // allow requests with no origin (Postman, mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
