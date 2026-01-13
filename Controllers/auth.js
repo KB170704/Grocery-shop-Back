@@ -25,6 +25,6 @@ exports.login = async (req, res) => {
   const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
 
   res
-      .cookie("token", token, { httpOnly: true })
-      .json({ message: "Login successful", token, role: user.role });
+    .cookie("token", token, { httpOnly: true })
+    .json({ message: "Login successful", token, role: user.role });
 };

@@ -4,6 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const dbConnection = require('./configs/db');
 
@@ -14,10 +15,9 @@ const contactRoutes = require('./Routes/contact');
 const paymentRoutes = require('./Routes/payment');
 const chargeRoutes = require("./Routes/chargeRoutes");
 
-// Models
+// Models (ONLY used for admin dashboard)
 const Contact = require('./Models/contact');
 const Menu = require('./Models/menu');
-const User = require('./Models/user');
 const Payment = require('./Models/order');
 
 // Middleware
@@ -25,32 +25,21 @@ const { authenticateJWT, authorizeRoles } = require('./middleware/auth');
 
 const app = express();
 
-// Connect to MongoDB Atlas
+// DB connection
 dbConnection();
+
+// Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // View engine
 app.set('view engine', 'ejs');
-app.set('views', './views');
+app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-const allowedOrigins = [
-  'https://kaushik-six.vercel.app',
-  'http://localhost:3000'
-];
-
+// CORS (safe)
 app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (Postman, mobile apps)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 app.use(express.json());
@@ -64,69 +53,45 @@ app.use("/user", userRoutes);
 app.use("/payment", paymentRoutes);
 app.use("/charges", chargeRoutes);
 
-// Admin pages
+// Admin dashboard
 app.get("/home", authenticateJWT, authorizeRoles('admin'), async (req, res) => {
-    try {
-        const contacts = await Contact.find();
-        const menuItems = await Menu.find();
-        const users = await User.find();
-        const orders = await Payment.find();
-
-        res.render("home", { contacts, menuItems, users, orders });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Server Error");
-    }
+  const contacts = await Contact.find();
+  const menuItems = await Menu.find();
+  const users = await require('./Models/User').find();
+  const orders = await Payment.find();
+  res.render("home", { contacts, menuItems, users, orders });
 });
 
-app.get("/menu", authenticateJWT, authorizeRoles('admin'), async (req, res) => {
-    try {
-        const menuItems = await Menu.find();
-        res.render('menu', { menuItems });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Default & login routes
+// Login page
 app.get('/', (req, res) => res.render('login'));
 
+// Login API
 app.post('/user/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(401).send('User not found');
+  const User = require('./Models/User');
+  const { email, password } = req.body;
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).send('Invalid password');
+  const user = await User.findOne({ email });
+  if (!user) return res.status(401).send('User not found');
 
-        const token = jwt.sign({ id: user._id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) return res.status(401).send('Invalid password');
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'None',
-            maxAge: 60 * 60 * 1000
-        }).json({
-            message: 'Login successful',
-            user: {
-                id: user._id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role
-            }
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: false,  // change to true if using HTTPS
+    sameSite: 'Lax'
+  }).json({ message: 'Login success' });
 });
 
-// Test route
+// Test
 app.get("/Back-End-Says", (req, res) => res.send("Backend running"));
 
 // Start server
-const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running on ${PORT}`));
